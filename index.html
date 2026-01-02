@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>PortionCal – Calorie Portion Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+body {
+  font-family: system-ui, Arial, sans-serif;
+  margin: 20px;
+  background:#fafafa;
+  line-height: 1.5;
+}
+
+h1 {
+  margin-bottom: 0.2em;
+}
+
+.container {
+  max-width: 700px;
+  margin: auto;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.06);
+}
+
+.section {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+label {
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 0.95rem;
+}
+
+.pan-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pan {
+  border: 2px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  width: 90px;
+  background:#f4f4f4;
+}
+
+.pan.selected {
+  border-color: #0077ff;
+  background: #e9f0ff;
+}
+
+.result-box {
+  background: #f1f9ff;
+  border: 1px solid #cfe8ff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.small {
+  opacity: .8;
+  font-size: .9rem;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>PortionCal</h1>
+<div class="small">Calorie calculator for shared home-cooked meals</div>
+
+<!-- PAN SELECTION -->
+<div class="section">
+  <h3>1) Select pan / pot</h3>
+
+  <div class="pan-list" id="panList"></div>
+
+  <label>Selected pan empty weight (grams)</label>
+  <input type="number" id="panWeight" />
+  <button onclick="savePanWeight()">Save pan weight</button>
+</div>
+
+<!-- DISH INPUTS -->
+<div class="section">
+  <h3>2) Enter dish totals</h3>
+
+  <label>Total weight on scale (pan + food, grams):</label>
+  <input type="number" id="totalWeight"/>
+
+  <label>Total calories of cooked dish:</label>
+  <input type="number" id="totalCalories"/>
+
+  <button onclick="calculateBase()">Calculate calories per gram</button>
+
+  <div class="result-box" id="baseOutput"></div>
+</div>
+
+<!-- SERVING CALCULATORS -->
+<div class="section">
+  <h3>3) Portion calculations</h3>
+
+  <label>Desired calories → get serving weight (grams)</label>
+  <input type="number" id="targetCalories" oninput="calcTargetWeight()"/>
+
+  <label>Serving weight (grams) → get calories</label>
+  <input type="number" id="servingWeight" oninput="calcServingCalories()"/>
+
+  <div class="result-box" id="portionOutput"></div>
+</div>
+
+</div>
+
+<script>
+/* ---------- PAN STORAGE ---------- */
+
+let pans = JSON.parse(localStorage.getItem("pans")) || [
+  {name:"Pan 1", weight:800},
+  {name:"Pan 2", weight:900},
+  {name:"Pot 1", weight:1200}
+];
+
+let selectedPanIndex = 0;
+
+function renderPans(){
+  const container = document.getElementById("panList");
+  container.innerHTML = "";
+  pans.forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className = "pan" + (i===selectedPanIndex ? " selected":"");
+    d.innerHTML = "🍳<br>"+p.name+"<br>"+p.weight+" g";
+    d.onclick = ()=> selectPan(i);
+    container.appendChild(d);
+  });
+
+  document.getElementById("panWeight").value = pans[selectedPanIndex].weight;
+}
+
+function selectPan(i){
+  selectedPanIndex = i;
+  renderPans();
+}
+
+/* save updated weight */
+function savePanWeight(){
+  const w = Number(document.getElementById("panWeight").value);
+  if(!w || w<=0) return alert("Enter valid pan weight");
+  pans[selectedPanIndex].weight = w;
+  localStorage.setItem("pans", JSON.stringify(pans));
+  renderPans();
+}
+
+renderPans();
+
+/* ---------- BASE CALCULATION ---------- */
+
+let caloriesPerGram = null;
+
+function calculateBase(){
+  const totalWeight = Number(document.getElementById("totalWeight").value);
+  const totalCalories = Number(document.getElementById("totalCalories").value);
+  const panWeight = pans[selectedPanIndex].weight;
+
+  if(!totalWeight || !totalCalories){
+    alert("Please enter totals");
+    return;
+  }
+
+  const foodWeight = totalWeight - panWeight;
+  if(foodWeight<=0){
+    alert("Food weight must be positive after subtracting pan weight");
+    return;
+  }
+
+  caloriesPerGram = totalCalories / foodWeight;
+
+  const out = `
+    Total food weight: <b>${foodWeight.toFixed(1)} g</b><br>
+    Calories per gram: <b>${caloriesPerGram.toFixed(4)}</b><br>
+    Calories per 100 g: <b>${(caloriesPerGram*100).toFixed(0)}</b>
+  `;
+  document.getElementById("baseOutput").innerHTML = out;
+  document.getElementById("portionOutput").innerHTML = "";
+}
+
+/* ---------- TARGET CALCULATIONS ---------- */
+
+function calcTargetWeight(){
+  if(!caloriesPerGram){
+    document.getElementById("portionOutput").innerHTML = "First calculate calories per gram above.";
+    return;
+  }
+  const target = Number(document.getElementById("targetCalories").value);
+  if(!target){
+    document.getElementById("portionOutput").innerHTML = "";
+    return;
+  }
+
+  const gramsNeeded = target / caloriesPerGram;
+  document.getElementById("portionOutput").innerHTML =
+    `To eat <b>${target}</b> kcal, serve <b>${gramsNeeded.toFixed(1)} g</b>`;
+}
+
+function calcServingCalories(){
+  if(!caloriesPerGram){
+    document.getElementById("portionOutput").innerHTML = "First calculate calories per gram above.";
+    return;
+  }
+  const grams = Number(document.getElementById("servingWeight").value);
+  if(!grams){
+    document.getElementById("portionOutput").innerHTML = "";
+    return;
+  }
+
+  const kcals = grams * caloriesPerGram;
+  document.getElementById("portionOutput").innerHTML =
+    `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b>`;
+}
+</script>
+
+</body>
+</html>
+
