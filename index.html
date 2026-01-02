@@ -62,8 +62,16 @@ button {
   border-radius: 10px;
   cursor: pointer;
   text-align: center;
-  width: 95px;
+  width: 110px;
   background:#f4f4f4;
+}
+
+.pan img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 6px auto;
 }
 
 .pan.selected {
@@ -101,6 +109,7 @@ button {
   <h3>1) Select pan / pot</h3>
 
   <div id="panListMain" class="pan-list"></div>
+  <br>
 
   <button id="moreButton" onclick="toggleMore()">Show more pans</button>
 
@@ -135,7 +144,7 @@ button {
   <input type="number" id="targetCalories" oninput="calcTargetWeight()"/>
 
   <label>Serving weight (grams) → get calories</label>
-  <input type="number" id="servingWeight" oninput="calcServingCalories()"/>
+  <input type="number" id="servingWeight" oninput="calcServingCalories"/>
 
   <div class="result-box" id="portionOutput"></div>
 </div>
@@ -148,22 +157,22 @@ button {
 /* load saved custom weight or default */
 let customWeight = Number(localStorage.getItem("customPanWeight")) || 1000;
 
-/* first 6 default pans */
+/* 5 main pans */
 const pansMain = [
-  {name:"Pan 1", weight:800},
-  {name:"Pan 2", weight:900},
-  {name:"Pan 3", weight:950},
-  {name:"Pot 1", weight:1400},
-  {name:"Pot 3", weight:1800}
+  {name:"Pan S", weight:635, img:"media/small_pan.jpg"},
+  {name:"Pan M", weight:756, img:"media/smallish_pan.jpg"},
+  {name:"Pan L", weight:5000, img:"media/medium_pan.jpg"},
+  {name:"Pan XL", weight:1548, img:"media/huge_pan.jpg"},
+  {name:"Frypan M", weight:973, img:"media/medium_frypan.jpg"}
 ];
 
-/* expandable additional 6 */
+/* expandable 5 more pans (last is custom) */
 const pansMore = [
-  {name:"Wok 1", weight:1100},
-  {name:"Wok 2", weight:1250},
-  {name:"Large pot", weight:2200},
-  {name:"Small pan", weight:650},
-  {name:"Custom", weight:customWeight, custom:true}
+  {name:"Frypan S", weight:799, img:"media/tiny_frypan.jpg"},
+  {name:"Frypan L",  weight:1301, img:"media/huge_frypan.jpg"},
+  {name:"other pan", weight:0, img:"media/largepot.png"},
+  {name:"other pan pan", weight:0, img:"media/smallpan.png"},
+  {name:"Custom", weight:customWeight, custom:true, img:"media/custom.png"}
 ];
 
 let selected = { group:"main", index:0 };
@@ -176,21 +185,27 @@ function renderPans() {
   main.innerHTML = "";
   more.innerHTML = "";
 
+  /* main group */
   pansMain.forEach((p,i)=>{
     const d=document.createElement("div");
     d.className="pan"+(selected.group==="main" && selected.index===i ? " selected":"");
-    d.innerHTML="🍳<br>"+p.name+"<br>"+p.weight+" g";
+    d.innerHTML=
+      `<img src="${p.img}" alt="${p.name}">`+
+      `<strong>${p.name}</strong><br>${p.weight} g`;
     d.onclick=()=>selectPan("main",i);
     main.appendChild(d);
   });
 
-  /* update custom weight display from variable */
-  pansMore[5].weight = customWeight;
+  /* ensure custom weight reflects latest */
+  pansMore[4].weight = customWeight;
 
+  /* more group */
   pansMore.forEach((p,i)=>{
     const d=document.createElement("div");
     d.className="pan"+(selected.group==="more" && selected.index===i ? " selected":"");
-    d.innerHTML=(p.custom ? "⚙️" : "🍳")+"<br>"+p.name+"<br>"+p.weight+" g";
+    d.innerHTML=
+      `<img src="${p.img}" alt="${p.name}">`+
+      `<strong>${p.name}</strong><br>${p.weight} g`;
     d.onclick=()=>selectPan("more",i);
     more.appendChild(d);
   });
@@ -309,6 +324,7 @@ function calcServingCalories(){
     `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b>`;
 }
 
+/* initial render */
 renderPans();
 </script>
 
