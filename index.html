@@ -27,7 +27,7 @@
   <div id="morePans" class="pan-list hidden" style="margin-top:10px;"></div>
 
   <label>Selected pan empty weight (grams)</label>
-  <input type="number" id="panWeight" disabled />
+  <input type="number" id="panWeight" disabled inputmode="numeric" pattern="[0-9]*"/>
   <button id="saveButton" onclick="saveCustomWeight()" disabled>Save custom weight</button>
   <div class="small">Only the “Custom” pan can be edited.</div>
 </div>
@@ -37,12 +37,11 @@
   <h3>2) Enter dish totals</h3>
 
   <label>Total weight on scale (pan + food, grams):</label>
-  <input type="number" id="totalWeight"/>
+  <input type="number" id="totalWeight" inputmode="decimal"/>
 
   <label>Total calories of cooked dish:</label>
-  <input type="number" id="totalCalories"/>
+  <input type="number" id="totalCalories" inputmode="decimal"/>
 
-  <!-- removed manual button -->
   <div class="result-box" id="baseOutput"></div>
 </div>
 
@@ -51,15 +50,16 @@
   <h3>3) Portion calculations</h3>
 
   <label>Desired calories → get serving weight (grams)</label>
-  <input type="number" id="targetCalories"/>
+  <input type="number" id="targetCalories" inputmode="decimal"/>
   <button onclick="handleTargetCalories()">Calculate serving weight</button>
-  <br>
+
+  <div class="result-box" id="targetResult"></div>
 
   <label>Serving weight (grams) → get calories</label>
-  <input type="number" id="servingWeight"/>
+  <input type="number" id="servingWeight" inputmode="decimal"/>
   <button onclick="handleServingWeight()">Calculate calories</button>
 
-  <div class="result-box" id="portionOutput"></div>
+  <div class="result-box" id="servingResult"></div>
 </div>
 
 </div>
@@ -164,7 +164,7 @@ function saveCustomWeight(){
   renderPans();
 }
 
-/* ---------- BASE CALCULATION (auto when needed) ---------- */
+/* ---------- BASE CALCULATION ---------- */
 
 let caloriesPerGram=null;
 
@@ -195,7 +195,7 @@ function calculateBase(){
   return true;
 }
 
-/* ---------- BUTTON HANDLERS ---------- */
+/* ---------- TARGET CALCULATIONS WITH SEPARATE OUTPUT ---------- */
 
 function handleTargetCalories(){
   if(!calculateBase()) return;
@@ -208,8 +208,11 @@ function handleTargetCalories(){
 
   const gramsNeeded = target / caloriesPerGram;
 
-  document.getElementById("portionOutput").innerHTML =
+  document.getElementById("targetResult").innerHTML =
     `To eat <b>${target}</b> kcal, serve <b>${gramsNeeded.toFixed(1)} g</b>`;
+
+  /* clear other result */
+  document.getElementById("servingResult").innerHTML = "";
 }
 
 function handleServingWeight(){
@@ -223,9 +226,30 @@ function handleServingWeight(){
 
   const kcals = grams * caloriesPerGram;
 
-  document.getElementById("portionOutput").innerHTML =
+  document.getElementById("servingResult").innerHTML =
     `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b>`;
+
+  /* clear other result */
+  document.getElementById("targetResult").innerHTML = "";
 }
+
+/* ---------- KEYBOARD / ENTER KEY UX ---------- */
+
+document.getElementById("targetCalories").addEventListener("keydown", e=>{
+  if(e.key==="Enter") handleTargetCalories();
+});
+
+document.getElementById("servingWeight").addEventListener("keydown", e=>{
+  if(e.key==="Enter") handleServingWeight();
+});
+
+document.getElementById("totalWeight").addEventListener("keydown", e=>{
+  if(e.key==="Enter") calculateBase();
+});
+
+document.getElementById("totalCalories").addEventListener("keydown", e=>{
+  if(e.key==="Enter") calculateBase();
+});
 
 /* initial render */
 renderPans();
