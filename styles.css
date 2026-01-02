@@ -1,0 +1,90 @@
+
+body {
+  font-family: system-ui, Arial, sans-serif;
+  margin: 25px;
+  background:#fafafa;
+  line-height: 1.5;
+}
+
+h1 {
+  margin-bottom: 0.2em;
+}
+
+.container {
+  max-width: 760px;
+  margin: auto;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.06);
+}
+
+.section {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+label {
+  font-weight: 600;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.pan-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pan {
+  border: 2px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  width: 110px;
+  background:#f4f4f4;
+}
+
+.pan img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 6px auto;
+}
+
+.pan.selected {
+  border-color: #0077ff;
+  background: #e9f0ff;
+}
+
+.hidden {
+  display:none;
+}
+
+.result-box {
+  background: #f1f9ff;
+  border: 1px solid #cfe8ff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
+.small {
+  opacity: .8;
+  font-size: .9rem;
+}

@@ -5,97 +5,8 @@
 <title>PortionCal – Calorie Portion Calculator</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<style>
-body {
-  font-family: system-ui, Arial, sans-serif;
-  margin: 20px;
-  background:#fafafa;
-  line-height: 1.5;
-}
+<link rel="stylesheet" href="styles.css">
 
-h1 {
-  margin-bottom: 0.2em;
-}
-
-.container {
-  max-width: 760px;
-  margin: auto;
-  background: white;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 14px rgba(0,0,0,.06);
-}
-
-.section {
-  margin-top: 18px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-label {
-  font-weight: 600;
-}
-
-input {
-  width: 100%;
-  padding: 8px;
-  margin-top: 4px;
-  margin-bottom: 10px;
-  font-size: 1rem;
-}
-
-button {
-  padding: 8px 14px;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.pan-list {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.pan {
-  border: 2px solid #ccc;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: center;
-  width: 110px;
-  background:#f4f4f4;
-}
-
-.pan img {
-  width: 90px;
-  height: 90px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 6px auto;
-}
-
-.pan.selected {
-  border-color: #0077ff;
-  background: #e9f0ff;
-}
-
-.hidden {
-  display:none;
-}
-
-.result-box {
-  background: #f1f9ff;
-  border: 1px solid #cfe8ff;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 1.1rem;
-}
-
-.small {
-  opacity: .8;
-  font-size: .9rem;
-}
-</style>
 </head>
 
 <body>
@@ -163,15 +74,13 @@ const pansMain = [
   {name:"Pan M", weight:756, img:"media/smallish_pan.jpg"},
   {name:"Pan L", weight:5000, img:"media/medium_pan.jpg"},
   {name:"Pan XL", weight:1548, img:"media/huge_pan.jpg"},
+  {name:"Frypan S", weight:799, img:"media/tiny_frypan.jpg"},
   {name:"Frypan M", weight:973, img:"media/medium_frypan.jpg"}
 ];
 
 /* expandable 5 more pans (last is custom) */
 const pansMore = [
-  {name:"Frypan S", weight:799, img:"media/tiny_frypan.jpg"},
   {name:"Frypan L",  weight:1301, img:"media/huge_frypan.jpg"},
-  {name:"other pan", weight:0, img:"media/largepot.png"},
-  {name:"other pan pan", weight:0, img:"media/smallpan.png"},
   {name:"Custom", weight:customWeight, custom:true, img:"media/custom.png"}
 ];
 
@@ -197,7 +106,8 @@ function renderPans() {
   });
 
   /* ensure custom weight reflects latest */
-  pansMore[4].weight = customWeight;
+  <!-- pansMore[pansMore.length - 1].weight = customWeight; !-->
+  pansMore.forEach(p => { if (p.custom) p.weight = customWeight; });
 
   /* more group */
   pansMore.forEach((p,i)=>{
