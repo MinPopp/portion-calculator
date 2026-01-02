@@ -18,7 +18,7 @@ h1 {
 }
 
 .container {
-  max-width: 700px;
+  max-width: 760px;
   margin: auto;
   background: white;
   padding: 16px 20px;
@@ -47,6 +47,7 @@ input {
 button {
   padding: 8px 14px;
   font-size: 0.95rem;
+  cursor: pointer;
 }
 
 .pan-list {
@@ -61,13 +62,17 @@ button {
   border-radius: 10px;
   cursor: pointer;
   text-align: center;
-  width: 90px;
+  width: 95px;
   background:#f4f4f4;
 }
 
 .pan.selected {
   border-color: #0077ff;
   background: #e9f0ff;
+}
+
+.hidden {
+  display:none;
 }
 
 .result-box {
@@ -95,11 +100,16 @@ button {
 <div class="section">
   <h3>1) Select pan / pot</h3>
 
-  <div class="pan-list" id="panList"></div>
+  <div id="panListMain" class="pan-list"></div>
+
+  <button id="moreButton" onclick="toggleMore()">Show more pans</button>
+
+  <div id="morePans" class="pan-list hidden" style="margin-top:10px;"></div>
 
   <label>Selected pan empty weight (grams)</label>
-  <input type="number" id="panWeight" />
-  <button onclick="savePanWeight()">Save pan weight</button>
+  <input type="number" id="panWeight" disabled />
+  <button id="saveButton" onclick="saveCustomWeight()" disabled>Save custom weight</button>
+  <div class="small">Only the “Custom” pan can be edited.</div>
 </div>
 
 <!-- DISH INPUTS -->
@@ -133,61 +143,125 @@ button {
 </div>
 
 <script>
-/* ---------- PAN STORAGE ---------- */
+/* ---------- PAN DEFINITIONS ---------- */
 
-let pans = JSON.parse(localStorage.getItem("pans")) || [
+/* load saved custom weight or default */
+let customWeight = Number(localStorage.getItem("customPanWeight")) || 1000;
+
+/* first 6 default pans */
+const pansMain = [
   {name:"Pan 1", weight:800},
   {name:"Pan 2", weight:900},
-  {name:"Pot 1", weight:1200}
+  {name:"Pan 3", weight:950},
+  {name:"Pot 1", weight:1400},
+  {name:"Pot 3", weight:1800}
 ];
 
-let selectedPanIndex = 0;
+/* expandable additional 6 */
+const pansMore = [
+  {name:"Wok 1", weight:1100},
+  {name:"Wok 2", weight:1250},
+  {name:"Large pot", weight:2200},
+  {name:"Small pan", weight:650},
+  {name:"Custom", weight:customWeight, custom:true}
+];
 
-function renderPans(){
-  const container = document.getElementById("panList");
-  container.innerHTML = "";
-  pans.forEach((p,i)=>{
+let selected = { group:"main", index:0 };
+
+function renderPans() {
+
+  const main = document.getElementById("panListMain");
+  const more = document.getElementById("morePans");
+
+  main.innerHTML = "";
+  more.innerHTML = "";
+
+  pansMain.forEach((p,i)=>{
     const d=document.createElement("div");
-    d.className = "pan" + (i===selectedPanIndex ? " selected":"");
-    d.innerHTML = "🍳<br>"+p.name+"<br>"+p.weight+" g";
-    d.onclick = ()=> selectPan(i);
-    container.appendChild(d);
+    d.className="pan"+(selected.group==="main" && selected.index===i ? " selected":"");
+    d.innerHTML="🍳<br>"+p.name+"<br>"+p.weight+" g";
+    d.onclick=()=>selectPan("main",i);
+    main.appendChild(d);
   });
 
-  document.getElementById("panWeight").value = pans[selectedPanIndex].weight;
+  /* update custom weight display from variable */
+  pansMore[5].weight = customWeight;
+
+  pansMore.forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className="pan"+(selected.group==="more" && selected.index===i ? " selected":"");
+    d.innerHTML=(p.custom ? "⚙️" : "🍳")+"<br>"+p.name+"<br>"+p.weight+" g";
+    d.onclick=()=>selectPan("more",i);
+    more.appendChild(d);
+  });
+
+  updateWeightPanel();
 }
 
-function selectPan(i){
-  selectedPanIndex = i;
+function toggleMore(){
+  const el = document.getElementById("morePans");
+  el.classList.toggle("hidden");
+  document.getElementById("moreButton").innerText =
+    el.classList.contains("hidden") ? "Show more pans" : "Hide extra pans";
+}
+
+function selectPan(group,index){
+  selected = {group,index};
   renderPans();
 }
 
-/* save updated weight */
-function savePanWeight(){
-  const w = Number(document.getElementById("panWeight").value);
-  if(!w || w<=0) return alert("Enter valid pan weight");
-  pans[selectedPanIndex].weight = w;
-  localStorage.setItem("pans", JSON.stringify(pans));
-  renderPans();
+function getSelectedPan(){
+  return selected.group==="main"
+    ? pansMain[selected.index]
+    : pansMore[selected.index];
 }
 
-renderPans();
+/* ---------- EDIT PANEL BEHAVIOR ---------- */
+
+function updateWeightPanel(){
+  const pan=getSelectedPan();
+  const input=document.getElementById("panWeight");
+  const saveBtn=document.getElementById("saveButton");
+
+  if(pan.custom){
+    input.disabled=false;
+    saveBtn.disabled=false;
+    input.value=customWeight;
+  } else {
+    input.disabled=true;
+    saveBtn.disabled=true;
+    input.value=pan.weight;
+  }
+}
+
+/* Only custom pan can save */
+function saveCustomWeight(){
+  const v=Number(document.getElementById("panWeight").value);
+  if(!v || v<=0){
+    alert("Enter valid custom pan weight");
+    return;
+  }
+  customWeight=v;
+  localStorage.setItem("customPanWeight", v);
+  renderPans();
+}
 
 /* ---------- BASE CALCULATION ---------- */
 
-let caloriesPerGram = null;
+let caloriesPerGram=null;
 
 function calculateBase(){
-  const totalWeight = Number(document.getElementById("totalWeight").value);
-  const totalCalories = Number(document.getElementById("totalCalories").value);
-  const panWeight = pans[selectedPanIndex].weight;
+  const totalWeight=Number(document.getElementById("totalWeight").value);
+  const totalCalories=Number(document.getElementById("totalCalories").value);
+  const pan=getSelectedPan();
+  const panWeight=pan.custom ? customWeight : pan.weight;
 
   if(!totalWeight || !totalCalories){
     alert("Please enter totals");
     return;
   }
 
-  const foodWeight = totalWeight - panWeight;
+  const foodWeight=totalWeight - panWeight;
   if(foodWeight<=0){
     alert("Food weight must be positive after subtracting pan weight");
     return;
@@ -195,28 +269,26 @@ function calculateBase(){
 
   caloriesPerGram = totalCalories / foodWeight;
 
-  const out = `
-    Total food weight: <b>${foodWeight.toFixed(1)} g</b><br>
-    Calories per gram: <b>${caloriesPerGram.toFixed(4)}</b><br>
-    Calories per 100 g: <b>${(caloriesPerGram*100).toFixed(0)}</b>
-  `;
-  document.getElementById("baseOutput").innerHTML = out;
-  document.getElementById("portionOutput").innerHTML = "";
+  document.getElementById("baseOutput").innerHTML =
+    `Total food weight: <b>${foodWeight.toFixed(1)} g</b><br>
+     Calories per gram: <b>${caloriesPerGram.toFixed(4)}</b><br>
+     Calories per 100 g: <b>${(caloriesPerGram*100).toFixed(0)}</b>`;
+
+  document.getElementById("portionOutput").innerHTML="";
 }
 
 /* ---------- TARGET CALCULATIONS ---------- */
 
 function calcTargetWeight(){
   if(!caloriesPerGram){
-    document.getElementById("portionOutput").innerHTML = "First calculate calories per gram above.";
+    document.getElementById("portionOutput").innerHTML="First calculate calories per gram above.";
     return;
   }
-  const target = Number(document.getElementById("targetCalories").value);
+  const target=Number(document.getElementById("targetCalories").value);
   if(!target){
-    document.getElementById("portionOutput").innerHTML = "";
+    document.getElementById("portionOutput").innerHTML="";
     return;
   }
-
   const gramsNeeded = target / caloriesPerGram;
   document.getElementById("portionOutput").innerHTML =
     `To eat <b>${target}</b> kcal, serve <b>${gramsNeeded.toFixed(1)} g</b>`;
@@ -224,19 +296,20 @@ function calcTargetWeight(){
 
 function calcServingCalories(){
   if(!caloriesPerGram){
-    document.getElementById("portionOutput").innerHTML = "First calculate calories per gram above.";
+    document.getElementById("portionOutput").innerHTML="First calculate calories per gram above.";
     return;
   }
-  const grams = Number(document.getElementById("servingWeight").value);
+  const grams=Number(document.getElementById("servingWeight").value);
   if(!grams){
-    document.getElementById("portionOutput").innerHTML = "";
+    document.getElementById("portionOutput").innerHTML="";
     return;
   }
-
   const kcals = grams * caloriesPerGram;
   document.getElementById("portionOutput").innerHTML =
     `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b>`;
 }
+
+renderPans();
 </script>
 
 </body>
