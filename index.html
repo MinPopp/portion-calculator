@@ -52,6 +52,7 @@
   <label>Desired calories → get serving weight (grams)</label>
   <input type="number" id="targetCalories" inputmode="decimal"/>
   <button onclick="handleTargetCalories()">Calculate serving weight</button>
+  <br>
 
   <div class="result-box" id="targetResult"></div>
 
@@ -164,6 +165,17 @@ function saveCustomWeight(){
   renderPans();
 }
 
+function updateResultVisibility() {
+  ["baseOutput", "targetResult", "servingResult"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.innerHTML.trim() === "") {
+      el.classList.remove("visible");
+    } else {
+      el.classList.add("visible");
+    }
+  });
+}
+
 /* ---------- BASE CALCULATION ---------- */
 
 let caloriesPerGram=null;
@@ -191,7 +203,8 @@ function calculateBase(){
     `Total food weight: <b>${foodWeight.toFixed(1)} g</b><br>
      Calories per gram: <b>${caloriesPerGram.toFixed(4)}</b><br>
      Calories per 100 g: <b>${(caloriesPerGram*100).toFixed(0)}</b>`;
-
+ 
+  updateResultVisibility();
   return true;
 }
 
@@ -213,6 +226,7 @@ function handleTargetCalories(){
 
   /* clear other result */
   document.getElementById("servingResult").innerHTML = "";
+  updateResultVisibility();
 }
 
 function handleServingWeight(){
@@ -231,6 +245,8 @@ function handleServingWeight(){
 
   /* clear other result */
   document.getElementById("targetResult").innerHTML = "";
+  updateResultVisibility();
+
 }
 
 /* ---------- KEYBOARD / ENTER KEY UX ---------- */

@@ -82,6 +82,11 @@ button {
   padding: 10px;
   border-radius: 8px;
   font-size: 1.1rem;
+  display: none;
+}
+
+.result-box.visible {
+  display: block;
 }
 
 .small {
