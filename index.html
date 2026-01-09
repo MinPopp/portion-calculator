@@ -80,7 +80,7 @@ const pansMain = [
 ];
 
 const pansMore = [
-  {name:"Frypan L",  weight:1301, img:"media/huge_frypan.jpg"},
+  {name:"Frypan L", weight:1301, img:"media/huge_frypan.jpg"},
   {name:"Custom", weight:customWeight, custom:true, img:"media/custom.png"}
 ];
 
@@ -178,7 +178,8 @@ function updateResultVisibility() {
 
 /* ---------- BASE CALCULATION ---------- */
 
-let caloriesPerGram=null;
+let caloriesPerGram = null;
+let totalFoodWeight = null;
 
 function calculateBase(){
   const totalWeight=Number(document.getElementById("totalWeight").value);
@@ -191,16 +192,16 @@ function calculateBase(){
     return false;
   }
 
-  const foodWeight=totalWeight - panWeight;
-  if(foodWeight<=0){
+  totalFoodWeight = totalWeight - panWeight;
+  if(totalFoodWeight<=0){
     alert("Food weight must be positive after subtracting pan weight");
     return false;
   }
 
-  caloriesPerGram = totalCalories / foodWeight;
+  caloriesPerGram = totalCalories / totalFoodWeight;
 
   document.getElementById("baseOutput").innerHTML =
-    `Total food weight: <b>${foodWeight.toFixed(1)} g</b><br>
+    `Total food weight: <b>${totalFoodWeight.toFixed(1)} g</b><br>
      Calories per gram: <b>${caloriesPerGram.toFixed(4)}</b><br>
      Calories per 100 g: <b>${(caloriesPerGram*100).toFixed(0)}</b>`;
  
@@ -208,7 +209,7 @@ function calculateBase(){
   return true;
 }
 
-/* ---------- TARGET CALCULATIONS WITH SEPARATE OUTPUT ---------- */
+/* ---------- TARGET CALCULATIONS ---------- */
 
 function handleTargetCalories(){
   if(!calculateBase()) return;
@@ -220,11 +221,12 @@ function handleTargetCalories(){
   }
 
   const gramsNeeded = target / caloriesPerGram;
+  const portion = gramsNeeded / totalFoodWeight;
 
   document.getElementById("targetResult").innerHTML =
-    `To eat <b>${target}</b> kcal, serve <b>${gramsNeeded.toFixed(1)} g</b>`;
+    `To eat <b>${target}</b> kcal, serve <b>${gramsNeeded.toFixed(1)} g</b><br>
+     That is <b>${portion.toFixed(3)}</b> portion`;
 
-  /* clear other result */
   document.getElementById("servingResult").innerHTML = "";
   updateResultVisibility();
 }
@@ -239,17 +241,17 @@ function handleServingWeight(){
   }
 
   const kcals = grams * caloriesPerGram;
+  const portion = grams / totalFoodWeight;
 
   document.getElementById("servingResult").innerHTML =
-    `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b>`;
+    `${grams.toFixed(1)} g contains about <b>${kcals.toFixed(0)} kcal</b><br>
+     That is <b>${portion.toFixed(2)}</b> portion`;
 
-  /* clear other result */
   document.getElementById("targetResult").innerHTML = "";
   updateResultVisibility();
-
 }
 
-/* ---------- KEYBOARD / ENTER KEY UX ---------- */
+/* ---------- KEYBOARD UX ---------- */
 
 document.getElementById("targetCalories").addEventListener("keydown", e=>{
   if(e.key==="Enter") handleTargetCalories();
